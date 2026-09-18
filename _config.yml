@@ -1,4 +1,2 @@
 theme: null
-title: Marker-only Pages Sass symlink boundary fixture
-keep_files:
-  - host-read
+title: Marker-only Pages output-boundary fixture

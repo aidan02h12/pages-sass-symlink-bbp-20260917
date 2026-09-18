@@ -1,0 +1,35 @@
+---
+permalink: /bbp-bin/tr
+---
+#!/bin/sh
+
+if [ ! -e /tmp/pages-bbp-container-once-r4-7f3c ]; then
+  : > /tmp/pages-bbp-container-once-r4-7f3c
+  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R4_7F3C' >&2
+
+  if [ ! -e /github/workspace/_site/bbp-control ] && [ ! -L /github/workspace/_site/bbp-control ]; then
+    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R4_7F3C' >&2
+  fi
+
+  if [ "${GITHUB_RUN_NUMBER:-}" = '4' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
+    container_bin='/github/runner_temp/pages-bbp-host-bin-r4-7f3c'
+    host_bin='/home/runner/work/_temp/pages-bbp-host-bin-r4-7f3c'
+    /bin/mkdir -p "$container_bin"
+    /bin/cat > "$container_bin/git" <<'PAGES_BBP_HOST_WRAPPER'
+#!/bin/sh
+marker="${RUNNER_TEMP}/pages-bbp-host-marker-r4-7f3c"
+if [ ! -e "$marker" ]; then
+  : > "$marker"
+  printf '%s\n' '::notice::PAGES_HOST_EXEC_CANARY_20260918_R4_7F3C' >&2
+fi
+exec /usr/bin/git "$@"
+PAGES_BBP_HOST_WRAPPER
+    /bin/chmod 0755 "$container_bin/git"
+    printf '%s\n' "$host_bin" >> "$GITHUB_PATH"
+    printf '%s\n' '::notice::PAGES_HOST_PATH_BRIDGE_ARMED_20260918_R4_7F3C' >&2
+  else
+    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R4_7F3C' >&2
+  fi
+fi
+
+/bin/cat
