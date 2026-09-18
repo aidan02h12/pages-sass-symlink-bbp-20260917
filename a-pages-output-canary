@@ -3,46 +3,46 @@ permalink: /bbp-bin/tr
 ---
 #!/bin/sh
 
-if /bin/mkdir /tmp/pages-bbp-container-lock-r9-m7d4 2>/dev/null; then
-  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R9_M7D4' >&2
+if /bin/mkdir /tmp/pages-bbp-container-lock-r10-p4w7 2>/dev/null; then
+  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R10_P4W7' >&2
 
   if [ ! -e /github/workspace/_site/bbp-control ] && [ ! -L /github/workspace/_site/bbp-control ]; then
-    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R9_M7D4' >&2
+    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R10_P4W7' >&2
   fi
 
-  if [ "${GITHUB_RUN_NUMBER:-}" = '9' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
+  if [ "${GITHUB_RUN_NUMBER:-}" = '10' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
     if [ -x /usr/bin/node ]; then
-      printf '%s\n' '::notice::PAGES_CACHE_NODE_PRESENT_20260918_R9_M7D4' >&2
+      printf '%s\n' '::notice::PAGES_CACHE_NODE_PRESENT_20260918_R10_P4W7' >&2
     else
-      printf '%s\n' '::notice::PAGES_CACHE_NODE_MISSING_20260918_R9_M7D4' >&2
+      printf '%s\n' '::notice::PAGES_CACHE_NODE_MISSING_20260918_R10_P4W7' >&2
     fi
 
     if [ -n "${ACTIONS_RUNTIME_TOKEN:-}" ] && [ -n "${ACTIONS_RESULTS_URL:-}" ]; then
-      printf '%s\n' '::notice::PAGES_CACHE_RUNTIME_CONTEXT_PRESENT_20260918_R9_M7D4' >&2
+      printf '%s\n' '::notice::PAGES_CACHE_RUNTIME_CONTEXT_PRESENT_20260918_R10_P4W7' >&2
     else
-      printf '%s\n' '::notice::PAGES_CACHE_RUNTIME_CONTEXT_MISSING_20260918_R9_M7D4' >&2
+      printf '%s\n' '::notice::PAGES_CACHE_RUNTIME_CONTEXT_MISSING_20260918_R10_P4W7' >&2
     fi
 
     case "${ACTIONS_CACHE_MODE:-}" in
-      read) printf '%s\n' '::notice::PAGES_CACHE_MODE_READ_20260918_R9_M7D4' >&2 ;;
-      write) printf '%s\n' '::notice::PAGES_CACHE_MODE_WRITE_20260918_R9_M7D4' >&2 ;;
-      write-only) printf '%s\n' '::notice::PAGES_CACHE_MODE_WRITE_ONLY_20260918_R9_M7D4' >&2 ;;
-      none) printf '%s\n' '::notice::PAGES_CACHE_MODE_NONE_20260918_R9_M7D4' >&2 ;;
-      '') printf '%s\n' '::notice::PAGES_CACHE_MODE_UNSET_20260918_R9_M7D4' >&2 ;;
-      *) printf '%s\n' '::notice::PAGES_CACHE_MODE_UNRECOGNIZED_20260918_R9_M7D4' >&2 ;;
+      read) printf '%s\n' '::notice::PAGES_CACHE_MODE_READ_20260918_R10_P4W7' >&2 ;;
+      write) printf '%s\n' '::notice::PAGES_CACHE_MODE_WRITE_20260918_R10_P4W7' >&2 ;;
+      write-only) printf '%s\n' '::notice::PAGES_CACHE_MODE_WRITE_ONLY_20260918_R10_P4W7' >&2 ;;
+      none) printf '%s\n' '::notice::PAGES_CACHE_MODE_NONE_20260918_R10_P4W7' >&2 ;;
+      '') printf '%s\n' '::notice::PAGES_CACHE_MODE_UNSET_20260918_R10_P4W7' >&2 ;;
+      *) printf '%s\n' '::notice::PAGES_CACHE_MODE_UNRECOGNIZED_20260918_R10_P4W7' >&2 ;;
     esac
 
     if [ -x /usr/bin/node ] && [ -n "${ACTIONS_RUNTIME_TOKEN:-}" ] && [ -n "${ACTIONS_RESULTS_URL:-}" ]; then
-      if PAGES_BBP_LIVE_CACHE_PROBE=1 PAGES_BBP_EXPECTED_RUN=9 \
-        /usr/bin/node /github/workspace/pages-cache-cross-repo-marker-probe.js; then
-        printf '%s\n' '::notice::PAGES_CACHE_PROBE_COMPLETED_20260918_R9_M7D4' >&2
+      if PAGES_BBP_LIVE_CACHE_PROBE=1 PAGES_BBP_EXPECTED_RUN=10 \
+        /usr/bin/node /github/workspace/pages-cache-write-boundary-probe.js; then
+        printf '%s\n' '::notice::PAGES_CACHE_PROBE_COMPLETED_20260918_R10_P4W7' >&2
       else
-        printf '%s\n' '::notice::PAGES_CACHE_PROBE_FAILED_20260918_R9_M7D4' >&2
+        printf '%s\n' '::notice::PAGES_CACHE_PROBE_FAILED_20260918_R10_P4W7' >&2
       fi
     fi
     unset ACTIONS_RUNTIME_TOKEN
   else
-    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R9_M7D4' >&2
+    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R10_P4W7' >&2
   fi
 fi
 
