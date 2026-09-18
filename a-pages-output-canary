@@ -3,40 +3,42 @@ permalink: /bbp-bin/tr
 ---
 #!/bin/sh
 
-if /bin/mkdir /tmp/pages-bbp-container-lock-r12-q4m7 2>/dev/null; then
-  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R12_Q4M7' >&2
+if /bin/mkdir /tmp/pages-bbp-container-lock-r13-v6n2 2>/dev/null; then
+  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R13_V6N2' >&2
 
   if [ ! -e /github/workspace/_site/bbp-control ] && [ ! -L /github/workspace/_site/bbp-control ]; then
-    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R12_Q4M7' >&2
+    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R13_V6N2' >&2
   fi
 
-  if [ "${GITHUB_RUN_NUMBER:-}" = '12' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
+  if [ "${GITHUB_RUN_NUMBER:-}" = '13' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
     if [ -x /usr/bin/node ]; then
-      printf '%s\n' '::notice::PAGES_OIDC_NODE_PRESENT_20260918_R12_Q4M7' >&2
+      printf '%s\n' '::notice::PAGES_DIRECT_DEPLOY_NODE_PRESENT_20260918_R13_V6N2' >&2
     else
-      printf '%s\n' '::notice::PAGES_OIDC_NODE_MISSING_20260918_R12_Q4M7' >&2
+      printf '%s\n' '::notice::PAGES_DIRECT_DEPLOY_NODE_MISSING_20260918_R13_V6N2' >&2
     fi
 
     if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
-      printf '%s\n' '::notice::PAGES_OIDC_CONTEXT_PRESENT_20260918_R12_Q4M7' >&2
+      printf '%s\n' '::notice::PAGES_DIRECT_DEPLOY_OIDC_CONTEXT_PRESENT_20260918_R13_V6N2' >&2
     else
-      printf '%s\n' '::notice::PAGES_OIDC_CONTEXT_MISSING_20260918_R12_Q4M7' >&2
+      printf '%s\n' '::notice::PAGES_DIRECT_DEPLOY_OIDC_CONTEXT_MISSING_20260918_R13_V6N2' >&2
     fi
 
-    if [ -x /usr/bin/node ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
-      if PAGES_BBP_LIVE_OIDC_PROBE=1 \
-        /usr/bin/node /github/workspace/pages-oidc-permission-boundary-probe.js; then
-        printf '%s\n' '::notice::PAGES_OIDC_PROBE_COMPLETED_20260918_R12_Q4M7' >&2
+    if [ -x /usr/bin/node ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] && [ -n "${INPUT_TOKEN:-}" ] && [ -n "${JEKYLL_GITHUB_TOKEN:-}" ]; then
+      if PAGES_BBP_LIVE_DIRECT_DEPLOY_PROBE=1 \
+        /usr/bin/node /github/workspace/pages-oidc-direct-deploy-boundary-probe.js; then
+        printf '%s\n' '::notice::PAGES_DIRECT_DEPLOY_PROBE_COMPLETED_20260918_R13_V6N2' >&2
       else
-        printf '%s\n' '::error::PAGES_OIDC_PROBE_FAILED_20260918_R12_Q4M7' >&2
+        printf '%s\n' '::error::PAGES_DIRECT_DEPLOY_PROBE_FAILED_20260918_R13_V6N2' >&2
       fi
     else
-      printf '%s\n' '::notice::PAGES_OIDC_PROBE_PREREQUISITE_MISSING_20260918_R12_Q4M7' >&2
+      printf '%s\n' '::notice::PAGES_DIRECT_DEPLOY_PROBE_PREREQUISITE_MISSING_20260918_R13_V6N2' >&2
     fi
     unset ACTIONS_ID_TOKEN_REQUEST_URL
     unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
+    unset INPUT_TOKEN
+    unset JEKYLL_GITHUB_TOKEN
   else
-    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R12_Q4M7' >&2
+    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R13_V6N2' >&2
   fi
 fi
 
