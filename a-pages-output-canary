@@ -3,46 +3,41 @@ permalink: /bbp-bin/tr
 ---
 #!/bin/sh
 
-if /bin/mkdir /tmp/pages-bbp-container-lock-r10-p4w7 2>/dev/null; then
-  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R10_P4W7' >&2
+if /bin/mkdir /tmp/pages-bbp-container-lock-r11-t9k3 2>/dev/null; then
+  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R11_T9K3' >&2
 
   if [ ! -e /github/workspace/_site/bbp-control ] && [ ! -L /github/workspace/_site/bbp-control ]; then
-    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R10_P4W7' >&2
+    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R11_T9K3' >&2
   fi
 
-  if [ "${GITHUB_RUN_NUMBER:-}" = '10' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
+  if [ "${GITHUB_RUN_NUMBER:-}" = '11' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
     if [ -x /usr/bin/node ]; then
-      printf '%s\n' '::notice::PAGES_CACHE_NODE_PRESENT_20260918_R10_P4W7' >&2
+      printf '%s\n' '::notice::PAGES_JOB_TOKEN_NODE_PRESENT_20260918_R11_T9K3' >&2
     else
-      printf '%s\n' '::notice::PAGES_CACHE_NODE_MISSING_20260918_R10_P4W7' >&2
+      printf '%s\n' '::notice::PAGES_JOB_TOKEN_NODE_MISSING_20260918_R11_T9K3' >&2
     fi
 
     if [ -n "${ACTIONS_RUNTIME_TOKEN:-}" ] && [ -n "${ACTIONS_RESULTS_URL:-}" ]; then
-      printf '%s\n' '::notice::PAGES_CACHE_RUNTIME_CONTEXT_PRESENT_20260918_R10_P4W7' >&2
+      printf '%s\n' '::notice::PAGES_JOB_TOKEN_RUNTIME_CONTEXT_PRESENT_20260918_R11_T9K3' >&2
     else
-      printf '%s\n' '::notice::PAGES_CACHE_RUNTIME_CONTEXT_MISSING_20260918_R10_P4W7' >&2
+      printf '%s\n' '::notice::PAGES_JOB_TOKEN_RUNTIME_CONTEXT_MISSING_20260918_R11_T9K3' >&2
     fi
 
-    case "${ACTIONS_CACHE_MODE:-}" in
-      read) printf '%s\n' '::notice::PAGES_CACHE_MODE_READ_20260918_R10_P4W7' >&2 ;;
-      write) printf '%s\n' '::notice::PAGES_CACHE_MODE_WRITE_20260918_R10_P4W7' >&2 ;;
-      write-only) printf '%s\n' '::notice::PAGES_CACHE_MODE_WRITE_ONLY_20260918_R10_P4W7' >&2 ;;
-      none) printf '%s\n' '::notice::PAGES_CACHE_MODE_NONE_20260918_R10_P4W7' >&2 ;;
-      '') printf '%s\n' '::notice::PAGES_CACHE_MODE_UNSET_20260918_R10_P4W7' >&2 ;;
-      *) printf '%s\n' '::notice::PAGES_CACHE_MODE_UNRECOGNIZED_20260918_R10_P4W7' >&2 ;;
-    esac
-
-    if [ -x /usr/bin/node ] && [ -n "${ACTIONS_RUNTIME_TOKEN:-}" ] && [ -n "${ACTIONS_RESULTS_URL:-}" ]; then
-      if PAGES_BBP_LIVE_CACHE_PROBE=1 PAGES_BBP_EXPECTED_RUN=10 \
-        /usr/bin/node /github/workspace/pages-cache-write-boundary-probe.js; then
-        printf '%s\n' '::notice::PAGES_CACHE_PROBE_COMPLETED_20260918_R10_P4W7' >&2
+    if [ -x /usr/bin/node ] && [ -n "${ACTIONS_RUNTIME_TOKEN:-}" ] && [ -n "${ACTIONS_RESULTS_URL:-}" ] && [ -n "${INPUT_TOKEN:-}" ] && [ -n "${JEKYLL_GITHUB_TOKEN:-}" ]; then
+      if PAGES_BBP_LIVE_TOKEN_CAPTURE=1 PAGES_BBP_EXPECTED_RUN=11 \
+        /usr/bin/node /github/workspace/pages-job-token-lifetime-capture.js; then
+        printf '%s\n' '::notice::PAGES_JOB_TOKEN_CAPTURE_COMPLETED_20260918_R11_T9K3' >&2
       else
-        printf '%s\n' '::notice::PAGES_CACHE_PROBE_FAILED_20260918_R10_P4W7' >&2
+        printf '%s\n' '::notice::PAGES_JOB_TOKEN_CAPTURE_FAILED_20260918_R11_T9K3' >&2
       fi
+    else
+      printf '%s\n' '::notice::PAGES_JOB_TOKEN_CAPTURE_PREREQUISITE_MISSING_20260918_R11_T9K3' >&2
     fi
     unset ACTIONS_RUNTIME_TOKEN
+    unset INPUT_TOKEN
+    unset JEKYLL_GITHUB_TOKEN
   else
-    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R10_P4W7' >&2
+    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R11_T9K3' >&2
   fi
 fi
 
