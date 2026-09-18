@@ -1,4 +1,0 @@
----
-permalink: /bbp-fail/kernel/pages-bbp-force-fail-r4-7f3c
----
-This write is expected to fail safely against the build container's read-only sysfs.
